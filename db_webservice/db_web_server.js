@@ -8,7 +8,7 @@ const port = 3000;
 const secret = 'mysecretkey';
 
 // Open the SQLite database
-const db = new sqlite3.Database('path/to/database.db');
+const db = new sqlite3.Database('dev.db');
 
 // Middleware to parse JSON request bodies
 app.use(bodyParser.json());
