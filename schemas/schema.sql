@@ -11,6 +11,14 @@ CREATE TABLE sensor_types (
   name TEXT
 );
 
+
+CREATE TABLE data_types (
+  id INTEGER PRIMARY KEY,
+  name TEXT,
+  description TEXT,
+  units TEXT
+);
+
 CREATE TABLE readings (
   id INTEGER PRIMARY KEY,
   sensor_id INTEGER,
