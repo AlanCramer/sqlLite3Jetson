@@ -30,4 +30,4 @@ INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (3, 16
 INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (3, 1618285827, 3, NULL);
 INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (4, 1618285832, 1, NULL);
 INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (4, 1618285837, 1, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (4, 
+
