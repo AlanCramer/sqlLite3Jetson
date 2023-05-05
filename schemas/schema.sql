@@ -14,7 +14,7 @@ CREATE TABLE sensor_types (
 
 CREATE TABLE data_types (
   id INTEGER PRIMARY KEY,
-  name TEXT,
+  name TEXT,  -- the name of the table that has the data
   description TEXT,
   units TEXT
 );
@@ -23,8 +23,9 @@ CREATE TABLE readings (
   id INTEGER PRIMARY KEY,
   sensor_id INTEGER,
   timestamp INTEGER,
-  data_type TEXT,   -- the name of the table with the data
-  data_id INTEGER,  -- the row of the table
+  data_type_id INTEGER,   -- the row of the data_types table with the data
+  data_id INTEGER,  -- the row of the table with the data
+  FOREIGN KEY (data_type_id) REFERENCES data_types(id)
   FOREIGN KEY (sensor_id) REFERENCES sensors(id)
 );
 
