@@ -1,33 +1,31 @@
--- Insert some fake sensor types
-INSERT INTO sensor_types (name) VALUES ('Motion');
+-- Sensor types
+INSERT INTO sensor_types (name) VALUES ('Temperature');
 INSERT INTO sensor_types (name) VALUES ('Camera');
-INSERT INTO sensor_types (name) VALUES ('Thermal Camera');
+INSERT INTO sensor_types (name) VALUES ('Motion');
 
--- Insert some fake sensors
-INSERT INTO sensors (name, type_id, mac_address) VALUES ('Sensor 1', 1, '00:11:22:33:44:55');
-INSERT INTO sensors (name, type_id, mac_address) VALUES ('Sensor 2', 2, 'AA:BB:CC:DD:EE:FF');
-INSERT INTO sensors (name, type_id, mac_address) VALUES ('Sensor 3', 3, '11:22:33:44:55:66');
-INSERT INTO sensors (name, type_id, mac_address) VALUES ('Sensor 4', 1, '22:33:44:55:66:77');
-INSERT INTO sensors (name, type_id, mac_address) VALUES ('Sensor 5', 2, 'BB:CC:DD:EE:FF:00');
-INSERT INTO sensors (name, type_id, mac_address) VALUES ('Sensor 6', 3, '33:44:55:66:77:88');
+-- Sensors
+INSERT INTO sensors (name, type_id, mac_address) VALUES ('Temperature Sensor 1', 1, 'AA:BB:CC:DD:EE:01');
+INSERT INTO sensors (name, type_id, mac_address) VALUES ('Camera 1', 2, 'AA:BB:CC:DD:EE:02');
+INSERT INTO sensors (name, type_id, mac_address) VALUES ('Motion Sensor 1', 3, 'AA:BB:CC:DD:EE:03');
 
--- Insert some fake data types
-INSERT INTO data_types (name, description, units) VALUES ('Temperature', 'Temperature reading', 'Celsius');
-INSERT INTO data_types (name, description, units) VALUES ('Humidity', 'Humidity reading', 'Percent');
-INSERT INTO data_types (name, description, units) VALUES ('Motion', 'Motion detection event', '');
-INSERT INTO data_types (name, description, units) VALUES ('Image', 'Image file', '');
-INSERT INTO data_types (name, description, units) VALUES ('Temperature 2', 'Second temperature reading', 'Celsius');
+-- Data types
+INSERT INTO data_types (name, description, units) VALUES ('image_data', 'Image data with people count', 'count');
+INSERT INTO data_types (name, description, units) VALUES ('motion_events', 'Motion events', '');
 
--- Insert some fake readings for each sensor
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (1, 1618285787, 1, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (1, 1618285792, 1, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (1, 1618285797, 1, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (2, 1618285802, 2, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (2, 1618285807, 2, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (2, 1618285812, 2, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (3, 1618285817, 3, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (3, 1618285822, 3, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (3, 1618285827, 3, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (4, 1618285832, 1, NULL);
-INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (4, 1618285837, 1, NULL);
+-- Image data
+INSERT INTO image_data (filename, timestamp, peopleDetected) VALUES ('image1.jpg', 1645000000, 5);
+INSERT INTO image_data (filename, timestamp, peopleDetected) VALUES ('image2.jpg', 1645000100, 2);
+INSERT INTO image_data (filename, timestamp, peopleDetected) VALUES ('image3.jpg', 1645000200, 3);
 
+-- Motion events
+INSERT INTO motion_events (motion_detected, timestamp) VALUES (1, 1645000250);
+INSERT INTO motion_events (motion_detected, timestamp) VALUES (1, 1645000300);
+
+-- Readings for image data
+INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (2, 1645000000, 1, 1);
+INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (2, 1645000100, 1, 2);
+INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (2, 1645000200, 1, 3);
+
+-- Readings for motion events
+INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (3, 1645000250, 2, 1);
+INSERT INTO readings (sensor_id, timestamp, data_type_id, data_id) VALUES (3, 1645000300, 2, 2);

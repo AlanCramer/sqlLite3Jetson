@@ -24,6 +24,7 @@ will get the latest node and npm.
 
 Then we need the webservice dependencies:
 ```
-npm install express sqlite3 jsonwebtoken body-parser
+npm install 
 ```
-
+will install the dependencies in the package file including 
+express sqlite3 jsonwebtoken body-parser

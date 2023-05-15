@@ -11,7 +11,6 @@ CREATE TABLE sensor_types (
   name TEXT
 );
 
-
 CREATE TABLE data_types (
   id INTEGER PRIMARY KEY,
   name TEXT,  -- the name of the table that has the data
@@ -33,12 +32,13 @@ CREATE TABLE image_data (
   id INTEGER PRIMARY KEY,
   filename TEXT,
   timestamp INTEGER,
+  peopleDetected INTEGER,
   FOREIGN KEY (id) REFERENCES readings(data_id)
 );
 
 CREATE TABLE motion_events (
   id INTEGER PRIMARY KEY,
-  motion_detected INTEGER,  -- I'm thinking, "motion changed"
+  motion_detected INTEGER,  -- always a 1?  we have a row for every motion detected?
   timestamp INTEGER,
   FOREIGN KEY (id) REFERENCES readings(data_id)
 );
