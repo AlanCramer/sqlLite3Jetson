@@ -35,6 +35,11 @@ CREATE TABLE image_data (
   peopleDetected INTEGER
 );
 
+CREATE TABLE thermal_image_data (
+  id INTEGER PRIMARY KEY,
+  filename TEXT
+);
+
 CREATE TABLE motion_data (
   id INTEGER PRIMARY KEY,
   motion_detected INTEGER  -- row for each change 

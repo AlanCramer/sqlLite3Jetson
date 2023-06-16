@@ -9,8 +9,9 @@ INSERT INTO sensors (name, type_id, mac_address) VALUES ('fake data test sensor'
 INSERT INTO sensors (name, type_id, mac_address) VALUES ('curl sensor', 3, 'AA:BB:CC:DD:EE:03');
 
 -- Data types
-INSERT INTO data_types (name, description, units) VALUES ('image_data', 'Image data with people count', 'count');
 INSERT INTO data_types (name, description, units) VALUES ('motion_events', 'Motion events', '');
+INSERT INTO data_types (name, description, units) VALUES ('image_data', 'Image data with people count', 'count');
+INSERT INTO data_types (name, description, units) VALUES ('thermal_events', 'Thermal image events', '');
 
 -- Image data
 INSERT INTO image_data (filename, peopleDetected) VALUES ('image1.jpg', 5);

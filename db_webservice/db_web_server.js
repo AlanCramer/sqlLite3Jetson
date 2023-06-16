@@ -3,6 +3,8 @@ const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const multer  = require('multer');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
@@ -126,6 +128,21 @@ app.get('/api/motion-readings', authenticateToken, (req, res) => {
   });
 });
 
+app.get('/api/thermal-readings', authenticateToken, (req, res) => {
+
+  console.log("got a thermal-readings request");
+  // Query the database for motion event data
+  db.all('SELECT * FROM thermal_image_data', (err, rows) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal server error' });
+    } else {
+      // Return the data as JSON
+      res.json(rows);
+    }
+  });
+});
+
 app.get('/api/people-detected', authenticateToken, (req, res) => {
     const query = `
       SELECT r.timestamp, i.peopleDetected
@@ -149,12 +166,27 @@ app.get('/api/people-detected', authenticateToken, (req, res) => {
 
 // Writing apis from sensors
 
+function addReading(sensor_id, time_read, event_id, data_id, db, res) {
+  let readingsData = [null, sensor_id, time_read, Date.now(), event_id, data_id];
+  let readingsQuery = 'INSERT INTO readings VALUES (?, ?, ?, ?, ?, ?)';
+  db.run(readingsQuery, readingsData, (err) => {
+    if (err) {
+      db.run('ROLLBACK');
+      console.log(" Error with reading, rolling back");
+      return res.status(500).json({ error: err.message });
+    }
+
+    db.run('COMMIT');
+    console.log(" Added Reading");
+    return res.status(200).json({ message: 'Data added' });
+  });
+}
 
 app.post('/motion-reading', (req, res) => {
-  const { sensorId, motion, time_read } = req.body;
-  const MOTION_EVENT_ID = 2;
+  const { sensor_id, motion, time_read } = req.body;
+  const MOTION_EVENT_ID = 1;
 
-  console.log("got a motion-reading request");
+  console.log("got a motion-reading request - sensor:" + sensor_id + " time: " + time_read);
 
   db.serialize(() => {
     db.run('PRAGMA foreign_keys = ON;');
@@ -172,22 +204,124 @@ app.post('/motion-reading', (req, res) => {
       let motionId = this.lastID;
 
       // Step 2: Add to readings table
-      let readingsData = [null, sensorId, time_read, Date.now(), MOTION_EVENT_ID, motionId];
-      let readingsQuery = 'INSERT INTO readings VALUES (?, ?, ?, ?, ?, ?)';
-      db.run(readingsQuery, readingsData, (err) => {
-        if (err) {
-          db.run('ROLLBACK');
-          console.log(" error with reading, rolling back");
-          return res.status(500).json({ error: err.message });
-        }
-
-        db.run('COMMIT');
-        console.log(" added motion event");
-        return res.status(200).json({ message: 'Data added' });
-      });
+      addReading(sensor_id, time_read, MOTION_EVENT_ID, motionId, db, res);
     });
   });
 });
+
+app.post('/image-reading', (req, res) => {
+  const { sensor_id, image_path, people_detected, time_read } = req.body;
+  const IMAGE_EVENT_ID = 2;
+
+  console.log("Got an image-reading request - sensor: " + sensor_id + " time: " + time_read);
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    // Step 1: Add to image_data table
+    let imageQuery = 'INSERT INTO image_data(filename, peopleDetected) VALUES (?, ?)';
+    db.run(imageQuery, [image_path, people_detected], function (err) {
+      if (err) {
+        console.log(" Error in the image query");
+        return res.status(500).json({ error: err.message });
+      }
+      console.log(` Added image_data, row: ${this.lastID}`);
+
+      let imageId = this.lastID;
+
+      // Step 2: Add to readings table
+      addReading(sensor_id, time_read, IMAGE_EVENT_ID, imageId, db, res);
+    });
+  });
+});
+
+app.post('/thermal-reading', (req, res) => {
+
+  const THERMAL_IMAGE_EVENT_ID = 3;
+
+  const sensor_id = req.body.sensor_id;
+  const time_read = req.body.time_read;
+  const thermal_data = req.body.thermal_data;
+
+  console.log("Got a thermal-reading request - sensor: " + sensor_id + " time: " + time_read);
+  // console.log("thermal data:");
+  // console.log(thermal_data);
+
+  // Write thermalData to a .txt file
+  const filepath = `./images/${sensor_id}_${time_read}.txt`;
+  fs.writeFileSync(filepath, thermal_data);
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    // Step 1: Add to image_data table
+    let thermalImageQuery = 'INSERT INTO thermal_image_data(filename) VALUES (?)';
+    db.run(thermalImageQuery, [filepath], function (err) {
+      if (err) {
+        console.log(" Error in the image query");
+        return res.status(500).json({ error: err.message });
+      }
+      console.log(` Added thermal_image_data, row: ${this.lastID}`);
+
+      let image_id = this.lastID;
+
+      // Step 2: Add to readings table - res returned from there
+      addReading(sensor_id, time_read, THERMAL_IMAGE_EVENT_ID, image_id, db, res);
+    });
+  });
+});
+
+app.post('/api/get-thermal-image', (req, res) => {
+  const imageId = req.body.image_id;
+
+  console.log("Received a request for a thermal image - image_id: " + imageId);
+
+  // Query the database for the filename of the requested thermal image
+  let thermalImageQuery = 'SELECT filename FROM thermal_image_data WHERE id = ?';
+  db.get(thermalImageQuery, [imageId], (err, row) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
+    } else if (!row) {
+      return res.status(404).json({ error: 'No image found with the provided id' });
+    } else {
+      // The filename of the thermal image was found in the database
+      const filepath = row.filename;
+      
+      // Read the thermal image file as a binary string
+      fs.readFile(filepath, 'binary', (err, file) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: 'Failed to read the image file' });
+        } else {
+          // Return the thermal image as a binary string
+          return res.status(200).json({ image_data: file });
+        }
+      });
+    }
+  });
+});
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, '/images')  // Replace with the directory where you want to save the images
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname)  // Generate unique filename
+  }
+})
+const upload = multer({ storage: storage })
+
+app.post('/upload', upload.single('image'), function (req, res, next) {
+  // req.file is the 'image' file 
+  // req.body will hold the text fields, if there were any 
+  res.send('File uploaded successfully!');
+})
+
+// app.listen(3000, () => {
+//   console.log('Server is running on port 3000');
+// });
 
 
 
