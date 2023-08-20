@@ -166,21 +166,29 @@ app.get('/api/people-detected', authenticateToken, (req, res) => {
 
 // Writing apis from sensors
 
-function addReading(sensor_id, time_read, event_id, data_id, db, res) {
+// function addReading(sensor_id, time_read, event_id, data_id, db, res) {
+//   let readingsData = [null, sensor_id, time_read, Date.now(), event_id, data_id];
+//   let readingsQuery = 'INSERT INTO readings VALUES (?, ?, ?, ?, ?, ?)';
+//   db.run(readingsQuery, readingsData, (err) => {
+//     if (err) {
+//       db.run('ROLLBACK');
+//       console.log(" Error with reading, rolling back");
+//       return res.status(500).json({ error: err.message });
+//     }
+
+//     db.run('COMMIT');
+//     console.log(" Added Reading");
+//     return res.status(200).json({ message: 'Data added' });
+//   });
+// }
+
+
+function addReading(sensor_id, time_read, event_id, data_id, db, callback) {
   let readingsData = [null, sensor_id, time_read, Date.now(), event_id, data_id];
   let readingsQuery = 'INSERT INTO readings VALUES (?, ?, ?, ?, ?, ?)';
-  db.run(readingsQuery, readingsData, (err) => {
-    if (err) {
-      db.run('ROLLBACK');
-      console.log(" Error with reading, rolling back");
-      return res.status(500).json({ error: err.message });
-    }
-
-    db.run('COMMIT');
-    console.log(" Added Reading");
-    return res.status(200).json({ message: 'Data added' });
-  });
+  db.run(readingsQuery, readingsData, callback);
 }
+
 
 app.post('/motion-reading', (req, res) => {
   const { sensor_id, motion, time_read } = req.body;
@@ -218,22 +226,37 @@ app.post('/image-reading', (req, res) => {
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
 
-    // Step 1: Add to image_data table
     let imageQuery = 'INSERT INTO image_data(filename, peopleDetected) VALUES (?, ?)';
     db.run(imageQuery, [image_path, people_detected], function (err) {
       if (err) {
         console.log(" Error in the image query");
+        db.run('ROLLBACK');
         return res.status(500).json({ error: err.message });
       }
       console.log(` Added image_data, row: ${this.lastID}`);
-
       let imageId = this.lastID;
 
-      // Step 2: Add to readings table
-      addReading(sensor_id, time_read, IMAGE_EVENT_ID, imageId, db, res);
+      addReading(sensor_id, time_read, IMAGE_EVENT_ID, imageId, db, (err) => {
+        if (err) {
+          console.log(" Error with reading, rolling back");
+          db.run('ROLLBACK');
+          return res.status(500).json({ error: err.message });
+        }
+        
+        db.run('COMMIT', (commitErr) => {
+          if (commitErr) {
+            db.run('ROLLBACK');
+            console.log("Transaction failed, rolling back", commitErr);
+            return res.status(500).json({ error: commitErr.message });
+          }
+          console.log("Transaction successful");
+          return res.status(200).json({ message: "Success" });
+        });
+      });
     });
   });
 });
+
 
 app.post('/thermal-reading', (req, res) => {
 
